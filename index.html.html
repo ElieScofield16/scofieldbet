@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScofieldBet — Suivi de paris</title>
+<style>
+:root{
+  --bg:#0b0f19;--panel:#121826;--panel2:#182133;--text:#f4f7fb;--muted:#8e9ab0;
+  --border:#263149;--green:#22c55e;--red:#ef4444;--blue:#4f8cff;--yellow:#f59e0b;
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(145deg,#090d16,#101827);color:var(--text)}
+button,input,select{font:inherit} button{cursor:pointer}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{padding:24px 16px;border-right:1px solid var(--border);background:#0b101a;position:sticky;top:0;height:100vh}
+.logo{font-weight:900;font-size:22px;letter-spacing:-.7px;padding:8px 10px 26px}.logo span{color:var(--blue)}
+.nav button{display:block;width:100%;padding:12px 13px;margin:5px 0;background:transparent;border:0;border-radius:11px;color:var(--muted);text-align:left}.nav button.active,.nav button:hover{background:var(--panel2);color:#fff}
+.side-note{position:absolute;bottom:20px;left:18px;right:18px;font-size:11px;line-height:1.45;color:#718099}
+main{padding:30px;max-width:1450px;width:100%;margin:auto}.top{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:22px}.eyebrow{color:var(--blue);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1.5px}.title{font-size:30px;font-weight:850;margin:3px 0}.sub{color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:rgba(18,24,38,.9);border:1px solid var(--border);border-radius:17px;padding:18px;box-shadow:0 12px 35px rgba(0,0,0,.14)}.label{color:var(--muted);font-size:12px}.value{font-size:26px;font-weight:800;margin-top:7px}.positive{color:var(--green)}.negative{color:var(--red)}
+.progress-card{margin-top:14px}.progress-head{display:flex;justify-content:space-between;align-items:end}.progress{height:12px;background:#222c40;border-radius:99px;overflow:hidden;margin-top:12px}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--blue),#7aa8ff);transition:.35s}
+.layout{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-top:14px}.section-title{font-weight:800;font-size:16px;margin-bottom:14px}.filters{display:flex;gap:8px;flex-wrap:wrap}.filters button{border:1px solid var(--border);background:#151d2c;color:var(--muted);border-radius:9px;padding:8px 11px}.filters button.active{color:#fff;border-color:#4169aa;background:#1a2942}
+.chart-wrap{height:300px;position:relative}.chart{width:100%;height:100%}.chart-empty{height:100%;display:grid;place-items:center;color:var(--muted);font-size:13px}
+.form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.full{grid-column:1/-1}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}.field input,.field select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border);background:#0d1421;color:#fff;outline:none}.field input:focus,.field select:focus{border-color:#527ec7}.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:750}.primary{background:var(--blue);color:#fff}.danger{background:#3a1519;color:#ff8b91;border:1px solid #6c252d}.success{background:#10331f;color:#6bea96;border:1px solid #1d6c3c}
+.pending{margin-top:12px;display:none;padding:14px;border:1px dashed #42506a;border-radius:12px;background:#101827}.pending.show{display:block}.pending-main{display:flex;justify-content:space-between;gap:12px;align-items:center}.pending-actions{display:flex;gap:8px}.bet-meta{font-size:13px;color:#cbd4e2}.small{font-size:11px;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:8px;max-height:410px;overflow:auto}.bet{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:12px;background:#0f1623}.status{font-size:11px;font-weight:800;padding:5px 8px;border-radius:99px}.won{color:#71ef9c;background:#103522}.lost{color:#ff8d95;background:#3b171c}.stake{font-weight:800}.odds{color:#aebbd0;font-size:12px}.empty{color:var(--muted);font-size:13px;padding:20px;text-align:center}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.mini{background:#0e1522;border:1px solid var(--border);border-radius:12px;padding:12px}.mini b{font-size:19px}.notice{margin-top:14px;padding:12px;border-radius:11px;background:#141b29;color:#9eabc0;font-size:11px;line-height:1.5;border:1px solid var(--border)}
+.hidden{display:none!important}
+@media(max-width:1050px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-right:0;border-bottom:1px solid var(--border)}.nav{display:flex;gap:5px;overflow:auto}.nav button{white-space:nowrap}.side-note{display:none}}
+@media(max-width:620px){main{padding:18px}.grid{grid-template-columns:1fr 1fr}.form{grid-template-columns:1fr}.full{grid-column:auto}.top{align-items:flex-start}.title{font-size:25px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo">Scofield<span>Bet</span></div>
+  <div class="nav">
+    <button class="active" data-page="dashboard">🏠 Tableau de bord</button>
+    <button data-page="bets">🎯 Mes paris</button>
+    <button data-page="stats">📊 Statistiques</button>
+  </div>
+  <div class="side-note">Outil personnel de suivi et de contrôle des dépenses. Les données restent enregistrées dans ce navigateur.</div>
+</aside>
+
+<main>
+<section id="dashboard">
+  <div class="top">
+    <div><div class="eyebrow">Vue d'ensemble</div><div class="title">Bonjour, bienvenue sur ScofieldBet.</div><div class="sub">Suis ton capital et tes résultats sans te perdre dans les chiffres.</div></div>
+    <button class="btn danger" onclick="resetAll()">Réinitialiser</button>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="label">Capital actuel</div><div class="value" id="capital">0,00 €</div><div class="small" id="capitalChange">—</div></div>
+    <div class="card"><div class="label">Résultat net</div><div class="value" id="profit">0,00 €</div><div class="small">gains − mises</div></div>
+    <div class="card"><div class="label">Paris</div><div class="value" id="count">0</div><div class="small"><span id="wins">0</span> gagnés · <span id="losses">0</span> perdus</div></div>
+    <div class="card"><div class="label">Taux de réussite</div><div class="value" id="winrate">0 %</div><div class="small">sur les paris clôturés</div></div>
+  </div>
+
+  <div class="card progress-card">
+    <div class="progress-head"><div><div class="label">Dépôt de base</div><div class="value" style="font-size:20px" id="depositText">0,00 € / 100 €</div></div><div class="small">plafond visuel 100 €</div></div>
+    <div class="progress"><div class="bar" id="depositBar"></div></div>
+  </div>
+
+  <div class="layout">
+    <div class="card">
+      <div class="section-title">Évolution du capital</div>
+      <div class="filters">
+        <button class="active" data-range="all">Tout</button><button data-range="day">Jour</button><button data-range="week">Semaine</button><button data-range="month">Mois</button>
+      </div>
+      <div class="chart-wrap"><canvas id="chart" class="chart"></canvas><div id="chartEmpty" class="chart-empty hidden">Ajoute des paris clôturés pour voir la courbe.</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Ajouter un pari</div>
+      <div class="form">
+        <div class="field"><label for="stake">Mise (€)</label><input id="stake" name="stake" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="10" autocomplete="off"></div>
+        <div class="field"><label for="odds">Cote</label><input id="odds" name="odds" type="number" inputmode="decimal" min="1.01" step="0.01" placeholder="1.80" autocomplete="off"></div>
+        <div class="field full"><label for="label">Intitulé / événement</label><input id="label" name="label" type="text" placeholder="Ex. Match de football" autocomplete="off"></div>
+        <div class="field"><label>Type</label><select id="type"><option>Simple</option><option>Combiné</option><option>Autre</option></select></div>
+        <div style="display:flex;align-items:end"><button class="btn primary" style="width:100%" onclick="createBet()">Mettre en attente</button></div>
+      </div>
+      <div class="pending" id="pending">
+        <div class="small">PARI EN ATTENTE</div>
+        <div class="pending-main">
+          <div><div class="bet-meta" id="pendingText"></div><div class="small" id="pendingPotential"></div></div>
+          <div class="pending-actions"><button class="btn danger" onclick="settle('lost')">Pari perdu</button><button class="btn success" onclick="settle('won')">Pari gagné</button></div>
+        </div>
+      </div>
+      <div class="notice">Le calcul du résultat est automatique : une victoire crédite le retour total (mise × cote) et une défaite retire la mise. Aucun pronostic ni conseil de mise n'est généré.</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="card"><div class="section-title">Derniers paris gagnés</div><div id="wonList" class="list"></div></div>
+    <div class="card"><div class="section-title">Derniers paris perdus</div><div id="lostList" class="list"></div></div>
+  </div>
+</section>
+
+<section id="bets" class="hidden">
+  <div class="top"><div><div class="eyebrow">Historique</div><div class="title">Tous mes paris</div><div class="sub">Historique chronologique de tes paris clôturés.</div></div></div>
+  <div class="card"><div id="allList" class="list"></div></div>
+</section>
+
+<section id="stats" class="hidden">
+  <div class="top"><div><div class="eyebrow">Analyse</div><div class="title">Statistiques détaillées</div><div class="sub">Des indicateurs descriptifs basés uniquement sur ton historique.</div></div></div>
+  <div class="card">
+    <div class="kpis">
+      <div class="mini"><div class="label">Mise totale</div><b id="totalStaked">0 €</b></div>
+      <div class="mini"><div class="label">Retour total</div><b id="totalReturned">0 €</b></div>
+      <div class="mini"><div class="label">ROI</div><b id="roi">0 %</b></div>
+      <div class="mini"><div class="label">Cote moyenne</div><b id="avgOdds">0</b></div>
+      <div class="mini"><div class="label">Plus grosse perte</div><b id="maxLoss">0 €</b></div>
+      <div class="mini"><div class="label">Plus gros gain net</div><b id="maxWin">0 €</b></div>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+<script>
+const KEY='scofieldbet_v1';
+let state=JSON.parse(localStorage.getItem(KEY)||'null')||{deposit:0,bets:[]};
+let pending=null, range='all';
+
+document.querySelectorAll('#stake,#odds,#label,#type').forEach(el=>{
+  el.addEventListener('click',e=>e.stopPropagation());
+  el.addEventListener('pointerdown',e=>e.stopPropagation());
+  el.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+});
+const euro=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);
+const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+const fmtDate=d=>new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const closed=()=>state.bets.filter(b=>b.status!=='pending');
+
+function createBet(){
+  const stake=+document.getElementById('stake').value, odds=+document.getElementById('odds').value, label=document.getElementById('label').value.trim()||'Pari sans intitulé', type=document.getElementById('type').value;
+  if(!(stake>0)||!(odds>=1.01)){alert('Renseigne une mise positive et une cote supérieure ou égale à 1,01.');return}
+  if(pending){alert('Termine le pari actuellement en attente avant d’en créer un autre.');return}
+  pending={id:crypto.randomUUID(),stake,odds,label,type,createdAt:new Date().toISOString()};
+  document.getElementById('pendingText').textContent=`${label} · ${type} · mise ${euro(stake)} · cote ${odds.toFixed(2)}`;
+  document.getElementById('pendingPotential').textContent=`Retour brut potentiel : ${euro(stake*odds)} · gain net : ${euro(stake*(odds-1))}`;
+  document.getElementById('pending').classList.add('show');
+}
+function settle(status){
+  if(!pending)return;
+  const b={...pending,status,settledAt:new Date().toISOString(),net:status==='won'?pending.stake*(pending.odds-1):-pending.stake,returned:status==='won'?pending.stake*pending.odds:0};
+  state.bets.push(b); pending=null; save(); document.getElementById('pending').classList.remove('show');
+  ['stake','odds','label'].forEach(id=>document.getElementById(id).value=''); render();
+}
+function calc(){
+  let capital=state.deposit, net=0, totalStaked=0, returned=0,wins=0,losses=0;
+  closed().sort((a,b)=>new Date(a.settledAt)-new Date(b.settledAt)).forEach(b=>{capital+=b.net;net+=b.net;totalStaked+=b.stake;returned+=b.returned;if(b.status==='won')wins++;else losses++});
+  return {capital,net,totalStaked,returned,wins,losses};
+}
+function render(){
+  const c=calc(), n=c.wins+c.losses;
+  document.getElementById('capital').textContent=euro(c.capital);
+  document.getElementById('capital').className='value '+(c.capital>=state.deposit?'positive':'negative');
+  document.getElementById('capitalChange').textContent=`Départ : ${euro(state.deposit)}`;
+  document.getElementById('profit').textContent=euro(c.net);
+  document.getElementById('profit').className='value '+(c.net>=0?'positive':'negative');
+  document.getElementById('count').textContent=state.bets.length;
+  document.getElementById('wins').textContent=c.wins; document.getElementById('losses').textContent=c.losses;
+  document.getElementById('winrate').textContent=(n?(c.wins/n*100):0).toFixed(1)+' %';
+  document.getElementById('depositText').textContent=`${euro(state.deposit)} / 100 €`;
+  document.getElementById('depositBar').style.width=Math.min(state.deposit,100)+'%';
+  renderList('wonList',closed().filter(b=>b.status==='won').slice().reverse().slice(0,8));
+  renderList('lostList',closed().filter(b=>b.status==='lost').slice().reverse().slice(0,8));
+  renderList('allList',closed().slice().reverse());
+  document.getElementById('totalStaked').textContent=euro(c.totalStaked);
+  document.getElementById('totalReturned').textContent=euro(c.returned);
+  document.getElementById('roi').textContent=(c.totalStaked?((c.net/c.totalStaked)*100):0).toFixed(1)+' %';
+  const odds=closed().map(b=>b.odds); document.getElementById('avgOdds').textContent=odds.length?(odds.reduce((a,b)=>a+b,0)/odds.length).toFixed(2):'0';
+  document.getElementById('maxLoss').textContent=euro(Math.min(0,...closed().map(b=>b.net)));
+  document.getElementById('maxWin').textContent=euro(Math.max(0,...closed().map(b=>b.net)));
+  drawChart();
+}
+function renderList(id,bets){
+  const el=document.getElementById(id);
+  if(!bets.length){el.innerHTML='<div class="empty">Aucun pari enregistré.</div>';return}
+  el.innerHTML=bets.map(b=>`<div class="bet"><div><div><b>${esc(b.label)}</b></div><div class="odds">${fmtDate(b.settledAt)} · ${b.type} · cote ${b.odds.toFixed(2)}</div></div><div class="stake">${euro(b.stake)}</div><span class="status ${b.status}">${b.status==='won'?'GAGNÉ':'PERDU'}</span></div>`).join('');
+}
+function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function filtered(){
+ const now=Date.now(), ms={day:86400000,week:604800000,month:2592000000};
+ if(range==='all')return closed();
+ return closed().filter(b=>now-new Date(b.settledAt).getTime()<=ms[range]);
+}
+function drawChart(){
+ const canvas=document.getElementById('chart'), ctx=canvas.getContext('2d'), rect=canvas.getBoundingClientRect(), dpr=devicePixelRatio||1;
+ canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+ const w=rect.width,h=rect.height, data=filtered().sort((a,b)=>new Date(a.settledAt)-new Date(b.settledAt));
+ ctx.clearRect(0,0,w,h);
+ if(!data.length){document.getElementById('chartEmpty').classList.remove('hidden');return}else document.getElementById('chartEmpty').classList.add('hidden');
+ let cap=state.deposit, pts=[{x:0,y:cap}]; data.forEach((b,i)=>{cap+=b.net;pts.push({x:i+1,y:cap})});
+ const vals=pts.map(p=>p.y), min=Math.min(...vals,0),max=Math.max(...vals,state.deposit,1), pad=30;
+ const X=i=>pad+(w-pad*1.3)*(i/(pts.length-1||1)), Y=v=>h-pad-(h-pad*1.7)*((v-min)/(max-min||1));
+ ctx.strokeStyle='#263149';ctx.lineWidth=1;
+ for(let i=0;i<5;i++){let y=pad+i*(h-pad*1.7)/4;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-10,y);ctx.stroke()}
+ ctx.font='11px system-ui';ctx.fillStyle='#718099';ctx.fillText(euro(max),pad,12);ctx.fillText(euro(min),pad,h-4);
+ ctx.lineWidth=3;ctx.beginPath();pts.forEach((p,i)=>{const x=X(i),y=Y(p.y);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.strokeStyle=pts[pts.length-1].y>=state.deposit?'#22c55e':'#ef4444';ctx.stroke();
+ pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(X(i),Y(p.y),4,0,Math.PI*2);ctx.fillStyle=p.y>=state.deposit?'#22c55e':'#ef4444';ctx.fill()});
+}
+function resetAll(){if(confirm('Supprimer tout l’historique et remettre le dépôt à zéro ?')){state={deposit:0,bets:[]};pending=null;save();render()}}
+document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-page]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));document.getElementById(b.dataset.page).classList.remove('hidden');render()});
+document.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-range]').forEach(x=>x.classList.remove('active'));b.classList.add('active');range=b.dataset.range;drawChart()});
+let depositPrompt=state.deposit;
+if(!state.deposit){const d=prompt('Montant de ton dépôt de base (€), 100 € maximum. Tu peux mettre 0 si tu veux le définir plus tard.','100');if(d!==null){state.deposit=Math.min(100,Math.max(0,+d||0));save()}}
+render();
+window.addEventListener('resize',drawChart);
+</script>
+</body>
+</html>
